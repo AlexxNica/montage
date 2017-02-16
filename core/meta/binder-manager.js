@@ -7,9 +7,25 @@
  * @requires montage/core/logger
  */
 var Montage = require("../core").Montage,
+    ModelGroup = require("./model-group").ModelGroup,
     ObjectProperty = require("./object-property").ObjectProperty,
     BinderModule = require("./binder"),
     logger = require("../logger").logger("blueprint");
+
+// var BinderManager = function () {
+//     return ModelGroup.apply(this, arguments);
+// };
+// BinderManager.prototype = ModelGroup.prototype;
+// BinderManager.prototype.constructor = BinderManager;
+// BinderManager.prototype.binders = ModelGroup.prototype.models;
+// BinderManager.prototype.addBinder = ModelGroup.prototype.addModel;
+// BinderManager.prototype.removeBinder = ModelGroup.prototype.removeModel;
+// BinderManager.prototype.binderForName = ModelGroup.prototype.modelForName;
+// BinderManager.prototype.blueprintForPrototype = ModelGroup.prototype.objectDescriptorForPrototype;
+// BinderManager.prototype.defaultBlueprintObjectProperty = ModelGroup.prototype.defaultObjectDescriptorObjectProperty;
+// BinderManager.prototype.defaultBinder = ModelGroup.prototype.defaultModel;
+// debugger;
+// exports.BinderManager = BinderManager;
 
 /**
  * @class BinderManager
@@ -18,14 +34,15 @@ var Montage = require("../core").Montage,
  *
  * @extends Montage
  */
-var BinderManager = exports.BinderManager = Montage.specialize( /** @lends BinderManager.prototype # */ {
+var BinderManager = exports.BinderManager = ModelGroup.specialize( /** @lends BinderManager.prototype # */ {
     /**
      * @constructs BinderManager
      */
     constructor: {
         value: function BinderManager() {
-            this._binders = [];
-            this._binderTable = {};
+            // this._binders = [];
+            // this._binderTable = {};
+            ModelGroup.apply(this, arguments);
         }
     },
 
@@ -33,17 +50,17 @@ var BinderManager = exports.BinderManager = Montage.specialize( /** @lends Binde
      * @private
      * @property {Array} value
      */
-    _binders: {
-        value: null
-    },
+    // _binders: {
+    //     value: null
+    // },
 
 
     /**
      * @private
      */
-    _binderTable: {
-        value: null
-    },
+    // _binderTable: {
+    //     value: null
+    // },
 
     /**
      * Return the list of binder registered on the manager.
@@ -53,7 +70,9 @@ var BinderManager = exports.BinderManager = Montage.specialize( /** @lends Binde
      */
     binders: {
         get: function () {
-            return this._binders;
+            debugger;
+            // return this._binders;
+            return this.models;
         }
     },
 
@@ -65,17 +84,18 @@ var BinderManager = exports.BinderManager = Montage.specialize( /** @lends Binde
      */
     addBinder: {
         value: function (binder) {
-            if (binder !== null) {
-                if (this._binderTable[binder.name]) {
-                    this.removeBinder(this._binderTable[binder.name]);
-                }
-                var index = this._binders.indexOf(binder);
-                if (index >= 0) {
-                    this._binders.splice(index, 1);
-                }
-                this._binders.push(binder);
-                this._binderTable[binder.name] = binder;
-            }
+            // if (binder !== null) {
+            //     if (this._binderTable[binder.name]) {
+            //         this.removeBinder(this._binderTable[binder.name]);
+            //     }
+            //     var index = this._binders.indexOf(binder);
+            //     if (index >= 0) {
+            //         this._binders.splice(index, 1);
+            //     }
+            //     this._binders.push(binder);
+            //     this._binderTable[binder.name] = binder;
+            // }
+            this.addModel(binder);
         }
     },
 
@@ -85,15 +105,16 @@ var BinderManager = exports.BinderManager = Montage.specialize( /** @lends Binde
      */
     removeBinder: {
         value: function (binder) {
-            if (binder !== null) {
-                var index = this._binders.indexOf(binder);
-                if (index >= 0) {
-                    this._binders.splice(index, 1);
-                }
-                if (this._binderTable[binder.name]) {
-                    delete this._binderTable[binder.name];
-                }
-            }
+            // if (binder !== null) {
+            //     var index = this._binders.indexOf(binder);
+            //     if (index >= 0) {
+            //         this._binders.splice(index, 1);
+            //     }
+            //     if (this._binderTable[binder.name]) {
+            //         delete this._binderTable[binder.name];
+            //     }
+            // }
+            return this.removeModel(binder);
         }
     },
 
@@ -103,7 +124,8 @@ var BinderManager = exports.BinderManager = Montage.specialize( /** @lends Binde
      */
     binderForName: {
         value: function (name) {
-            return this._binderTable[name];
+            // return this._binderTable[name];
+            return this.modelForName(name);
         }
     },
 
@@ -117,14 +139,15 @@ var BinderManager = exports.BinderManager = Montage.specialize( /** @lends Binde
      */
     blueprintForPrototype: {
         value: function (prototypeName, moduleId) {
-            var binder, blueprint, index;
-            for (index = 0; typeof (binder = this.binders[index]) !== "undefined"; index++) {
-                blueprint = binder.blueprintForPrototype(prototypeName, moduleId);
-                if (blueprint !== null) {
-                    return blueprint;
-                }
-            }
-            return null;
+            // var binder, blueprint, index;
+            // for (index = 0; typeof (binder = this.binders[index]) !== "undefined"; index++) {
+            //     blueprint = binder.blueprintForPrototype(prototypeName, moduleId);
+            //     if (blueprint !== null) {
+            //         return blueprint;
+            //     }
+            // }
+            // return null;
+            return this.objectDescriptorForPrototype(prototypeName);
         }
     },
 
@@ -145,17 +168,18 @@ var BinderManager = exports.BinderManager = Montage.specialize( /** @lends Binde
      */
     defaultBlueprintObjectProperty: {
         get: function () {
-            if (!this._defaultBlueprintObjectProperty) {
-                this._defaultBlueprintObjectProperty = new ObjectProperty().init();
-            }
-            return this._defaultBlueprintObjectProperty;
+            // if (!this._defaultBlueprintObjectProperty) {
+            //     this._defaultBlueprintObjectProperty = new ObjectProperty().init();
+            // }
+            // return this._defaultBlueprintObjectProperty;
+            return this.defaultObjectDescriptorObjectProperty;
         }
     },
 
-    _defaultBinder: {
-        serializable: true,
-        value: null
-    },
+    // _defaultBinder: {
+    //     serializable: true,
+    //     value: null
+    // },
 
     /**
      * Return the default blueprint object property.
@@ -166,13 +190,15 @@ var BinderManager = exports.BinderManager = Montage.specialize( /** @lends Binde
      */
     defaultBinder: {
         get: function () {
-            if (!this._defaultBinder) {
-                this._defaultBinder = new BinderModule.Binder().initWithNameAndRequire("default", self.mr);
-                this._defaultBinder.isDefault = true;
-                this.addBinder(this._defaultBinder);
-            }
-            return this._defaultBinder;
+            // if (!this._defaultBinder) {
+            //     this._defaultBinder = new BinderModule.Binder().initWithNameAndRequire("default", self.mr);
+            //     this._defaultBinder.isDefault = true;
+            //     this.addBinder(this._defaultBinder);
+            // }
+            // return this._defaultBinder;
+            return this.defaultModel;
         }
     }
 
 });
+

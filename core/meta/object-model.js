@@ -1,0 +1,289 @@
+/**
+ * @module montage/core/meta/binder
+ * @requires montage/core/core
+ * @requires core/meta/binder-manager
+ * @requires core/meta/blueprint
+ * @requires core/logger
+ */
+var Montage = require("../core").Montage,
+    ModelModule = require("./model-group"),
+    ObjectDescriptorModule = require("./object-descriptor"),
+    deprecate = require("../deprecate");
+
+    var _group = null;
+
+/**
+ * @class ObjectModel
+ * @classdesc A ObjectModel represents a logical collection
+ *
+ * @extends Montage
+ */
+var ObjectModel = exports.ObjectModel = Montage.specialize( /** @lends ObjectModel.prototype # */ {
+    /**
+     * @constructs ObjectModel
+     */
+    constructor: {
+        value: function ObjectModel() {
+            this._name = null;
+            this.objectModelModuleId = null;
+            this.isDefault = false;
+            this._objectDescriptorForPrototypeTable = {};
+            return this;
+        }
+    },
+
+    /**
+     * @function
+     * @param {string} name
+     * @returns itself
+     */
+    initWithNameAndRequire: {
+        value: function (name, _require) {
+            if (!name) throw new Error("name is required");
+            if (!_require) throw new Error("require is required");
+
+            this._name = name;
+            this._require = _require;
+            ObjectModel.group.addModel(this);
+            return this;
+        }
+    },
+
+    serializeSelf: {
+        value: function (serializer) {
+            serializer.setProperty("name", this.name);
+            if (this.objectDescriptors.length > 0) {
+                serializer.setProperty("objectDescriptors", this.objectDescriptors);
+            }
+            serializer.setProperty("objectModelModuleId", this.objectModelInstanceModuleId);
+        }
+    },
+
+    deserializeSelf: {
+        value: function (deserializer) {
+            this._name = deserializer.getProperty("name");
+            //copy contents into the objectDescriptors array
+            var value = deserializer.getProperty("objectDescriptors");
+            if (value) {
+                this._objectDescriptors = value;
+            }
+            this.objectModelInstanceModuleId = deserializer.getProperty("objectModelModuleId");
+        }
+    },
+
+    _name: {
+        value: null
+    },
+
+    /**
+     * Name of the object.
+     * The name is used to define the property on the object.
+     * @function
+     * @type {string}
+     */
+    name: {
+        get: function () {
+            return this._name;
+        }
+    },
+
+    /**
+     * @private
+     */
+    _require: {
+        value: null
+    },
+
+    /**
+     * Require for the binder.
+     * All objectDescriptors added must be in this require's package, or in a direct
+     * dependency.
+     * @readonly
+     * @returns {function} a package's `require` function
+     */
+    require: {
+        get: function () {
+            return this._require;
+        }
+    },
+
+    /**
+     * @private
+     */
+    _objectDescriptorForPrototypeTable: {
+        value: null
+    },
+
+    /**
+     * The identifier is the name of the binder and is used to make the
+     * serialization of binders more readable.
+     * @returns {string}
+     */
+    identifier: {
+        get: function () {
+            return [
+                "objectModel",
+                this.name.toLowerCase()
+            ].join("_");
+        }
+    },
+
+    /**
+     * This is used for references only so that we can reload referenced
+     * binders.
+     */
+    objectModelInstanceModuleId: {
+        serializable:false,
+        value: null
+    },
+
+    /**
+     * Identify the default binder. Do not set.
+     * @readonly
+     * @type {boolean}
+     */
+    isDefault: {
+        serializable: false,
+        value: false
+    },
+
+    _objectDescriptors: {
+        value: null
+    },
+
+    /**
+     * The list of objectDescriptors in this binder.
+     * @readonly
+     * @returns {Array.<Blueprint>}
+     */
+    objectDescriptors: {
+        get: function () {
+            return this._objectDescriptors || (this._objectDescriptors = []);
+        }
+    },
+
+    /**
+     * @function
+     * @param {?Blueprint} blueprint
+     * @returns blueprint
+     */
+    addObjectDescriptor: {
+        value: function (objectDescriptor) {
+            if (objectDescriptor !== null) {
+                var index = this.objectDescriptors.indexOf(objectDescriptor);
+                if (index < 0) {
+                    if ((objectDescriptor.model !== null) && (objectDescriptor.model !== this)) {
+                        objectDescriptor.model.removeObjectDescriptor(objectDescriptor);
+                    }
+                    this.objectDescriptors.push(objectDescriptor);
+                    objectDescriptor.model = this;
+                }
+            }
+            return objectDescriptor;
+        }
+    },
+
+    /**
+     * @function
+     * @param {Blueprint} blueprint
+     * @returns blueprint
+     */
+    removeObjectDescriptor: {
+        value: function (objectDescriptor) {
+            if (objectDescriptor !== null) {
+                var index = this.objectDescriptors.indexOf(objectDescriptor);
+                if (index >= 0) {
+                    this.objectDescriptors.splice(index, 1);
+                    objectDescriptor.model = null;
+                }
+            }
+            return objectDescriptor;
+        }
+    },
+
+    /**
+     * @function
+     * @param {string} name
+     * @param {string} moduleID
+     * @returns {Blueprint} The new blueprint
+     */
+    addObjectDescriptorNamed: {
+        value: function (name) {
+            return this.addObjectDescriptor(new ObjectDescriptorModule.ObjectDescriptor().initWithName(name));
+        }
+    },
+
+    /**
+     * Return the blueprint associated with this prototype.
+     * @function
+     * @param {string} prototypeName
+     * @param {string} moduleId
+     * @returns {?Blueprint} blueprint
+     */
+    objectDescriptorForPrototype: {
+        value: deprecate.deprecateMethod(void 0, function (prototypeName) {
+            return this.blueprintForName(prototypeName);
+        }, "objectDescriptorForPrototype", "objectDescriptorForName")
+    },
+
+    /**
+     *
+     * @param {string} name
+     * @returns {?ObjectDescriptor} if this model has an object descriptor
+     * with the provided name.  Otherwise, returns null.
+     */
+    objectDescriptorForName: {
+        value: function (name) {
+            var objectDescriptors = this.objectDescriptors,
+                blueprint = null,
+                length = objectDescriptors.length;
+            for (var i = 0; i < length && !blueprint; i++) {
+                if (objectDescriptors[i].name === name) {
+                    blueprint = objectDescriptors[i];
+                }
+            }
+            return blueprint;
+        }
+    },
+
+    /**
+     * @private
+     */
+    _objectDescriptorObjectProperty: {
+        value: null
+    },
+
+    /**
+     * Return the blueprint object property for this binder.
+     * This will return the default if none is declared.
+     * @type {ObjectProperty}
+     */
+    ObjectProperty: {
+        get: function () {
+            if (!this._objectDescriptorObjectProperty) {
+                this._objectDescriptorObjectProperty = ObjectModel.group.defaultObjectDescriptorObjectProperty;
+            }
+            return this._objectDescriptorObjectProperty;
+        }
+    },
+
+    objectDescriptorModuleId: require("../core")._objectDescriptorModuleId,
+
+    objectDescriptor: require("../core")._objectDescriptor
+
+}, {
+
+    /**
+     * Returns the blueprint binder manager.
+     * @returns {BinderManager}
+     */
+    group: {
+        get: function () {
+            if (_group === null) {
+                _group = new ModelModule.ModelGroup();
+            }
+            return _group;
+        }
+    }
+
+});

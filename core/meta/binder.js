@@ -6,7 +6,8 @@
  * @requires core/meta/blueprint
  * @requires core/logger
  */
-var Montage = require("../core").Montage;
+// var Montage = require("../core").Montage;
+var ObjectModel = require("./object-model").ObjectModel;
 var BinderManager = require("./binder-manager").BinderManager;
 var BlueprintModule = require("./blueprint");
 var deprecate = require("../deprecate");
@@ -21,17 +22,18 @@ var _binderManager = null;
  *
  * @extends Montage
  */
-var Binder = exports.Binder = Montage.specialize( /** @lends Binder.prototype # */ {
+var Binder = exports.Binder = ObjectModel.specialize( /** @lends Binder.prototype # */ {
     /**
      * @constructs Binder
      */
     constructor: {
         value: function Binder() {
-            this._name = null;
-            this.binderModuleId = null;
-            this.isDefault = false;
-            this._blueprintForPrototypeTable = {};
-            return this;
+            // this._name = null;
+            // this.binderModuleId = null;
+            // this.isDefault = false;
+            // this._blueprintForPrototypeTable = {};
+            // return this;
+            ObjectModel.apply(this, arguments);
         }
     },
 
@@ -40,119 +42,119 @@ var Binder = exports.Binder = Montage.specialize( /** @lends Binder.prototype # 
      * @param {string} name
      * @returns itself
      */
-    initWithNameAndRequire: {
-        value: function (name, _require) {
-            if (!name) throw new Error("name is required");
-            if (!_require) throw new Error("require is required");
+    // initWithNameAndRequire: {
+    //     value: function (name, _require) {
+    //         if (!name) throw new Error("name is required");
+    //         if (!_require) throw new Error("require is required");
+    //
+    //         this._name = name;
+    //         this._require = _require;
+    //         Binder.manager.addBinder(this);
+    //         return this;
+    //     }
+    // },
 
-            this._name = name;
-            this._require = _require;
-            Binder.manager.addBinder(this);
-            return this;
-        }
-    },
-
-    serializeSelf: {
-        value: function (serializer) {
-            serializer.setProperty("name", this.name);
-            if (this.blueprints.length > 0) {
-                serializer.setProperty("blueprints", this.blueprints);
-            }
-            serializer.setProperty("binderModuleId", this.binderInstanceModuleId);
-        }
-    },
-
-    deserializeSelf: {
-        value: function (deserializer) {
-            this._name = deserializer.getProperty("name");
-            //copy contents into the blueprints array
-            var value = deserializer.getProperty("blueprints");
-            if (value) {
-                this._blueprints = value;
-            }
-            this.binderInstanceModuleId = deserializer.getProperty("binderModuleId");
-        }
-    },
-
-    _name: {
-        value: null
-    },
-
-    /**
-     * Name of the object.
-     * The name is used to define the property on the object.
-     * @function
-     * @type {string}
-     */
-    name: {
-        get: function () {
-            return this._name;
-        }
-    },
+    // serializeSelf: {
+    //     value: function (serializer) {
+    //         serializer.setProperty("name", this.name);
+    //         if (this.blueprints.length > 0) {
+    //             serializer.setProperty("blueprints", this.blueprints);
+    //         }
+    //         serializer.setProperty("binderModuleId", this.binderInstanceModuleId);
+    //     }
+    // },
+    //
+    // deserializeSelf: {
+    //     value: function (deserializer) {
+    //         this._name = deserializer.getProperty("name");
+    //         //copy contents into the blueprints array
+    //         var value = deserializer.getProperty("blueprints");
+    //         if (value) {
+    //             this._blueprints = value;
+    //         }
+    //         this.binderInstanceModuleId = deserializer.getProperty("binderModuleId");
+    //     }
+    // },
+    //
+    // _name: {
+    //     value: null
+    // },
+    //
+    // /**
+    //  * Name of the object.
+    //  * The name is used to define the property on the object.
+    //  * @function
+    //  * @type {string}
+    //  */
+    // name: {
+    //     get: function () {
+    //         return this._name;
+    //     }
+    // },
+    //
+    // /**
+    //  * @private
+    //  */
+    // _require: {
+    //     value: null
+    // },
+    //
+    // /**
+    //  * Require for the binder.
+    //  * All blueprints added must be in this require's package, or in a direct
+    //  * dependency.
+    //  * @readonly
+    //  * @returns {function} a package's `require` function
+    //  */
+    // require: {
+    //     get: function () {
+    //         return this._require;
+    //     }
+    // },
 
     /**
      * @private
      */
-    _require: {
-        value: null
-    },
-
-    /**
-     * Require for the binder.
-     * All blueprints added must be in this require's package, or in a direct
-     * dependency.
-     * @readonly
-     * @returns {function} a package's `require` function
-     */
-    require: {
-        get: function () {
-            return this._require;
-        }
-    },
-
-    /**
-     * @private
-     */
-    _blueprintForPrototypeTable: {
-        value: null
-    },
+    // _blueprintForPrototypeTable: {
+    //     value: null
+    // },
 
     /**
      * The identifier is the name of the binder and is used to make the
      * serialization of binders more readable.
      * @returns {string}
      */
-    identifier: {
-        get: function () {
-            return [
-                "binder",
-                this.name.toLowerCase()
-            ].join("_");
-        }
-    },
+    // identifier: {
+    //     get: function () {
+    //         return [
+    //             "binder",
+    //             this.name.toLowerCase()
+    //         ].join("_");
+    //     }
+    // },
 
     /**
      * This is used for references only so that we can reload referenced
      * binders.
      */
-    binderInstanceModuleId: {
-        serializable:false,
-        value: null
-    },
+    // binderInstanceModuleId: {
+    //     serializable:false,
+    //     value: null
+    // },
 
     /**
      * Identify the default binder. Do not set.
      * @readonly
      * @type {boolean}
      */
-    isDefault: {
-        serializable: false,
-        value: false
-    },
-
-    _blueprints: {
-        value: null
-    },
+    // isDefault: {
+    //     serializable: false,
+    //     value: false
+    // },
+    //
+    // _blueprints: {
+    //     value: null
+    // },
 
     /**
      * The list of blueprints in this binder.
@@ -161,7 +163,8 @@ var Binder = exports.Binder = Montage.specialize( /** @lends Binder.prototype # 
      */
     blueprints: {
         get: function () {
-            return this._blueprints || (this._blueprints = []);
+            // return this._blueprints || (this._blueprints = []);
+            return this.objectDescriptors;
         }
     },
 
@@ -172,17 +175,18 @@ var Binder = exports.Binder = Montage.specialize( /** @lends Binder.prototype # 
      */
     addBlueprint: {
         value: function (blueprint) {
-            if (blueprint !== null) {
-                var index = this.blueprints.indexOf(blueprint);
-                if (index < 0) {
-                    if ((blueprint.binder !== null) && (blueprint.binder !== this)) {
-                        blueprint.binder.removeBlueprint(blueprint);
-                    }
-                    this.blueprints.push(blueprint);
-                    blueprint.binder = this;
-                }
-            }
-            return blueprint;
+            // if (blueprint !== null) {
+            //     var index = this.blueprints.indexOf(blueprint);
+            //     if (index < 0) {
+            //         if ((blueprint.binder !== null) && (blueprint.binder !== this)) {
+            //             blueprint.binder.removeBlueprint(blueprint);
+            //         }
+            //         this.blueprints.push(blueprint);
+            //         blueprint.binder = this;
+            //     }
+            // }
+            // return blueprint;
+            return this.addObjectDescriptor(blueprint);
         }
     },
 
@@ -193,14 +197,15 @@ var Binder = exports.Binder = Montage.specialize( /** @lends Binder.prototype # 
      */
     removeBlueprint: {
         value: function (blueprint) {
-            if (blueprint !== null) {
-                var index = this.blueprints.indexOf(blueprint);
-                if (index >= 0) {
-                    this.blueprints.splice(index, 1);
-                    blueprint.binder = null;
-                }
-            }
-            return blueprint;
+            // if (blueprint !== null) {
+            //     var index = this.blueprints.indexOf(blueprint);
+            //     if (index >= 0) {
+            //         this.blueprints.splice(index, 1);
+            //         blueprint.binder = null;
+            //     }
+            // }
+            // return blueprint;
+            return this.removeObjectDescriptor(blueprint);
         }
     },
 
@@ -212,7 +217,8 @@ var Binder = exports.Binder = Montage.specialize( /** @lends Binder.prototype # 
      */
     addBlueprintNamed: {
         value: function (name) {
-            return this.addBlueprint(new BlueprintModule.Blueprint().initWithName(name));
+            // return this.addBlueprint(new BlueprintModule.Blueprint().initWithName(name));
+            return this.addObjectDescriptorNamed(name);
         }
     },
 
@@ -235,54 +241,55 @@ var Binder = exports.Binder = Montage.specialize( /** @lends Binder.prototype # 
      */
     blueprintForName: {
         value: function (name) {
-            var blueprints = this.blueprints,
-                length = blueprints.length;
-            for (var i = 0; i < length; i++) {
-                if (blueprints[i].name === name) {
-                    return blueprints[i];
-                }
-            }
+            // var blueprints = this.blueprints,
+            //     length = blueprints.length;
+            // for (var i = 0; i < length; i++) {
+            //     if (blueprints[i].name === name) {
+            //         return blueprints[i];
+            //     }
+            // }
+            return this.objectDescriptorForName(name);
         }
-    },
-
+        // },
+    }
     /**
      * @private
      */
-    _blueprintObjectProperty: {
-        value: null
-    },
+    // _blueprintObjectProperty: {
+    //     value: null
+    // },
 
     /**
      * Return the blueprint object property for this binder.
      * This will return the default if none is declared.
      * @type {ObjectProperty}
      */
-    ObjectProperty: {
-        get: function () {
-            if (!this._blueprintObjectProperty) {
-                this._blueprintObjectProperty = Binder.manager.defaultBlueprintObjectProperty;
-            }
-            return this._blueprintObjectProperty;
-        }
-    },
+    // ObjectProperty: {
+    //     get: function () {
+    //         if (!this._blueprintObjectProperty) {
+    //             this._blueprintObjectProperty = Binder.manager.defaultBlueprintObjectProperty;
+    //         }
+    //         return this._blueprintObjectProperty;
+    //     }
+    // },
 
-    blueprintModuleId: require("../core")._blueprintModuleIdDescriptor,
+    // blueprintModuleId: require("../core")._blueprintModuleIdDescriptor,
+    //
+    // blueprint: require("../core")._blueprintDescriptor
 
-    blueprint: require("../core")._blueprintDescriptor
-
-}, {
+// }, {
 
     /**
      * Returns the blueprint binder manager.
      * @returns {BinderManager}
      */
-    manager: {
-        get: function () {
-            if (_binderManager === null) {
-                _binderManager = new BinderManager();
-            }
-            return _binderManager;
-        }
-    }
+    // manager: {
+    //     get: function () {
+    //         if (_binderManager === null) {
+    //             _binderManager = new BinderManager();
+    //         }
+    //         return _binderManager;
+    //     }
+    // }
 
 });
