@@ -4,10 +4,9 @@
  * @requires core/promise
  * @requires core/logger
  */
-var Montage = require("../core").Montage;
-var Promise = require("../promise").Promise;
-
-var logger = require("../logger").logger("blueprint");
+var Montage = require("../core").Montage,
+    Promise = require("../promise").Promise,
+    logger = require("../logger").logger("objectDescriptor");
 
 exports.RemoteReference = Montage.specialize({
 
@@ -97,8 +96,8 @@ exports.RemoteReference = Montage.specialize({
         }
     },
 
-    blueprintModuleId: require("../core")._blueprintModuleIdDescriptor,
+    objectDescriptorModuleId: require("../core")._objectDescriptorModuleIdDescriptor,
 
-    blueprint: require("../core")._blueprintDescriptor
+    objectDescriptor: require("../core")._objectDescriptor
 
 });

@@ -9,7 +9,7 @@ var Montage = require("../core").Montage;
 var Promise = require("../promise").Promise;
 var ObjectModelModule = require("./object-model");
 var BlueprintReference = require("./blueprint-reference").BlueprintReference;
-var PropertyBlueprint = require("./property-blueprint").PropertyBlueprint;
+var PropertyDescriptor = require("./property-descriptor").PropertyDescriptor;
 var AssociationBlueprint = require("./association-blueprint").AssociationBlueprint;
 var DerivedPropertyBlueprint = require("./derived-property-blueprint").DerivedPropertyBlueprint;
 var EventBlueprint = require("./event-blueprint").EventBlueprint;
@@ -355,7 +355,7 @@ var ObjectDescriptor = exports.ObjectDescriptor = Montage.specialize( /** @lends
     },
 
     /**
-     * @returns {Array.<PropertyBlueprint>}
+     * @returns {Array.<PropertyDescriptor>}
      */
     propertyDescriptors: {
         get: function () {
@@ -428,12 +428,12 @@ var ObjectDescriptor = exports.ObjectDescriptor = Montage.specialize( /** @lends
      * in order to enable subclassing.
      * @param {string} name name of the property blueprint to create
      * @param {number} cardinality name of the property blueprint to create
-     * @returns {PropertyBlueprint}
+     * @returns {PropertyDescriptor}
      */
     newPropertyDescriptor: {
         value: function (name, cardinality) {
-            // TODO: refactor after converting PropertyBlueprint to PropertyDescriptor
-            return new PropertyBlueprint().initWithNameBlueprintAndCardinality(name, this, cardinality);
+            // TODO: refactor after converting PropertyDescriptor to PropertyDescriptor
+            return new PropertyDescriptor().initWithNameObjectDescriptorAndCardinality(name, this, cardinality);
         }
     },
 
@@ -528,26 +528,26 @@ var ObjectDescriptor = exports.ObjectDescriptor = Montage.specialize( /** @lends
     /**
      * @function
      * @param {string} name
-     * @returns {PropertyBlueprint}
+     * @returns {PropertyDescriptor}
      */
     propertyDescriptorForName: {
         value: function (name) {
             var propertyDescriptor = this._propertyDescriptorsTable[name];
             if (typeof propertyDescriptor === "undefined") {
-                propertyDescriptor = UnknownPropertyBlueprint;
-                var anPropertyBlueprint, index;
-                for (index = 0; typeof (anPropertyBlueprint = this._propertyDescriptors[index]) !== "undefined"; index++) {
-                    if (anPropertyBlueprint.name === name) {
-                        propertyDescriptor = anPropertyBlueprint;
+                propertyDescriptor = UnknownPropertyDescriptor;
+                var aPropertyDescriptor, index;
+                for (index = 0; typeof (aPropertyDescriptor = this._propertyDescriptors[index]) !== "undefined"; index++) {
+                    if (aPropertyDescriptor.name === name) {
+                        propertyDescriptor = aPropertyDescriptor;
                         break;
                     }
                 }
                 this._propertyDescriptorsTable[name] = propertyDescriptor;
             }
-            if (propertyDescriptor === UnknownPropertyBlueprint) {
+            if (propertyDescriptor === UnknownPropertyDescriptor) {
                 propertyDescriptor = null;
             }
-            if ((! propertyDescriptor) && (this.parent)) {
+            if (!propertyDescriptor && this.parent) {
                 propertyDescriptor = this.parent.propertyDescriptorForName(name);
             }
             return propertyDescriptor;
@@ -579,9 +579,9 @@ var ObjectDescriptor = exports.ObjectDescriptor = Montage.specialize( /** @lends
     /**
      * Returns the group associated with that name
      * @param {string} name of the group
-     * @returns {Array.<PropertyBlueprint>} property blueprint group
+     * @returns {Array.<PropertyDescriptor>} property descriptor group
      */
-    propertyBlueprintGroupForName: {
+    propertyDescriptorGroupForName: {
         value: function (groupName) {
             var group = this._propertyDescriptorsGroups[groupName];
             if ((! group) && (this.parent)) {
@@ -651,7 +651,7 @@ var ObjectDescriptor = exports.ObjectDescriptor = Montage.specialize( /** @lends
      * @function
      * @param {string} name of the property
      * @param {string} name of the group
-     * @returns {Array.<PropertyBlueprint>} property blueprint group
+     * @returns {Array.<PropertyDescriptor>} property descriptor group
      */
     removePropertyDescriptorFromGroupNamed: {
         value: function (propertyDescriptor, groupName) {
@@ -750,7 +750,7 @@ var ObjectDescriptor = exports.ObjectDescriptor = Montage.specialize( /** @lends
      * @returns {EventBlueprint}
      */
     addEventPropertyDescriptorNamed: {
-        value: function (name, inverse) {
+        value: function (name) {
             return this.addEventPropertyDescriptor(this.newEventPropertyDescriptor(name));
         }
     },
@@ -798,8 +798,8 @@ var ObjectDescriptor = exports.ObjectDescriptor = Montage.specialize( /** @lends
      */
     propertyValidationRules: {
         get: function () {
-            var propertyValidationRules = [];
-            for (var name in this._propertyValidationRules) {
+            var propertyValidationRules = [], name;
+            for (name in this._propertyValidationRules) {
                 propertyValidationRules.push(this._propertyValidationRules[name]);
             }
             if (this.parent) {
@@ -817,7 +817,7 @@ var ObjectDescriptor = exports.ObjectDescriptor = Montage.specialize( /** @lends
     propertyValidationRuleForName: {
         value: function (name) {
             var propertyValidationRule = this._propertyValidationRules[name];
-            if ((! propertyValidationRule) && (this.parent)) {
+            if (!propertyValidationRule && this.parent) {
                 propertyValidationRule = this.parent.propertyValidationRuleForName(name);
             }
             return propertyValidationRule;
@@ -865,9 +865,9 @@ var ObjectDescriptor = exports.ObjectDescriptor = Montage.specialize( /** @lends
      */
     evaluateRules: {
         value: function (objectInstance) {
-            var messages = [];
-            for (var name in this._propertyValidationRules) {
-                var rule = this._propertyValidationRules[name];
+            var messages = [], name, rule;
+            for (name in this._propertyValidationRules) {
+                rule = this._propertyValidationRules[name];
                 if (rule.evaluateRule(objectInstance)) {
                     messages.push(rule.messageKey);
                 }
@@ -929,5 +929,5 @@ var ObjectDescriptor = exports.ObjectDescriptor = Montage.specialize( /** @lends
 var UnknownObjectDescriptor = Object.freeze(new ObjectDescriptor().initWithName("Unknown"));
 
 // TODO: Come back after creating PropertyDescriptor and EventPropertyDescriptor
-var UnknownPropertyBlueprint = Object.freeze(new PropertyBlueprint().initWithNameBlueprintAndCardinality("Unknown", null, 1));
+var UnknownPropertyDescriptor = Object.freeze(new PropertyDescriptor().initWithNameObjectDescriptorAndCardinality("Unknown", null, 1));
 var UnknownEventBlueprint = Object.freeze(new EventBlueprint().initWithNameAndBlueprint("Unknown", null));

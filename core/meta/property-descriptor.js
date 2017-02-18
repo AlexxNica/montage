@@ -3,11 +3,9 @@
  * @requires montage/core/core
  * @requires core/logger
  */
-
 var BlueprintReference = require("./blueprint-reference").BlueprintReference;
 var Montage = require("../core").Montage;
 var logger = require("../logger").logger("blueprint");
-
 
 // TODO change Defaults[*] to Defaults.* throughout. Needless performance
 // degredation.
@@ -32,47 +30,47 @@ var Defaults = {
 /* DeleteRules */
 
 /*
-Deny
-If there is at least one object at the relationship destination (employees), do not delete the source object (department).
+ Deny
+ If there is at least one object at the relationship destination (employees), do not delete the source object (department).
 
-For example, if you want to remove a department, you must ensure that all the employees in that department are first transferred elsewhere (or fired!); otherwise, the department cannot be deleted.
+ For example, if you want to remove a department, you must ensure that all the employees in that department are first transferred elsewhere (or fired!); otherwise, the department cannot be deleted.
 
-Nullify
-Remove the relationship between the objects but do not delete either object.
+ Nullify
+ Remove the relationship between the objects but do not delete either object.
 
-This only makes sense if the department relationship for an employee is optional, or if you ensure that you set a new department for each of the employees before the next save operation.
+ This only makes sense if the department relationship for an employee is optional, or if you ensure that you set a new department for each of the employees before the next save operation.
 
-Cascade
-Delete the objects at the destination of the relationship when you delete the source.
+ Cascade
+ Delete the objects at the destination of the relationship when you delete the source.
 
-For example, if you delete a department, fire all the employees in that department at the same time.
+ For example, if you delete a department, fire all the employees in that department at the same time.
 
-No Action
-Do nothing to the object at the destination of the relationship.
+ No Action
+ Do nothing to the object at the destination of the relationship.
 
-Default
-Value that will be assigned ?
+ Default
+ Value that will be assigned ?
 
-*/
+ */
 
 
 /**
  * @class PropertyBlueprint
  */
-var PropertyBlueprint = exports.PropertyBlueprint = Montage.specialize( /** @lends PropertyBlueprint# */ {
+exports.PropertyDescriptor = Montage.specialize( /** @lends PropertyDescriptor# */ {
 
     /**
-     * Initialize a newly allocated property blueprint.
+     * Initialize a newly allocated property descriptor.
      * @function
-     * @param {string} name name of the property blueprint to create
-     * @param {Blueprint} blueprint
-     * @param {number} cardinality name of the property blueprint to create
+     * @param {string} name name of the property descriptor to create
+     * @param {ObjectDescriptor} objectDescriptor
+     * @param {number} cardinality name of the property descriptor to create
      * @returns itself
      */
-    initWithNameBlueprintAndCardinality:{
-        value:function (name, blueprint, cardinality) {
+    initWithNameObjectDescriptorAndCardinality:{
+        value:function (name, objectDescriptor, cardinality) {
             this._name = (name !== null ? name : Defaults["name"]);
-            this._owner = blueprint;
+            this._owner = objectDescriptor;
             this.cardinality = (cardinality > 0 ? cardinality : Defaults["cardinality"]);
             return this;
         }
@@ -81,7 +79,7 @@ var PropertyBlueprint = exports.PropertyBlueprint = Montage.specialize( /** @len
     serializeSelf:{
         value:function (serializer) {
             serializer.setProperty("name", this.name);
-            serializer.setProperty("blueprint", this._owner, "reference");
+            serializer.setProperty("objectDescriptor", this._owner, "reference");
             if (this.cardinality === Infinity) {
                 serializer.setProperty("cardinality", -1);
             } else {
@@ -106,7 +104,7 @@ var PropertyBlueprint = exports.PropertyBlueprint = Montage.specialize( /** @len
     deserializeSelf:{
         value:function (deserializer) {
             this._name = deserializer.getProperty("name");
-            this._owner = deserializer.getProperty("blueprint");
+            this._owner = deserializer.getProperty("objectDescriptor");
             this.cardinality = this._getPropertyWithDefaults(deserializer, "cardinality");
             if (this.cardinality === -1) {
                 this.cardinality = Infinity;
@@ -305,7 +303,8 @@ var PropertyBlueprint = exports.PropertyBlueprint = Montage.specialize( /** @len
             this._valueDescriptorReference = new BlueprintReference().initWithValue(blueprint);
         }
     },
-    _targetBlueprintReference: {
+
+    _targetObjectDescriptorReference: {
         value: null
     },
 
@@ -339,8 +338,8 @@ var PropertyBlueprint = exports.PropertyBlueprint = Montage.specialize( /** @len
         value: Defaults["helpKey"]
     },
 
-    blueprintModuleId:require("../core")._blueprintModuleIdDescriptor,
+    objectDescriptorModuleId:require("../core")._objectDescriptorModuleIdDescriptor,
 
-    blueprint:require("../core")._blueprintDescriptor
+    objectDescriptor:require("../core")._objectDescriptor
 
 });
